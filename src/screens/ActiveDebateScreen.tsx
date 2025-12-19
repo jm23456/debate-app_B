@@ -30,7 +30,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const [currentSpeaker, setCurrentSpeaker] = useState<string>("yellow");
   const [currentTypingText, setCurrentTypingText] = useState<string | undefined>(undefined);
-  const [messagesSinceUserInput, setMessagesSinceUserInput] = useState(0);
+  const messagesSinceUserInput = useRef(0);
   const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
   const [hasUserSentOpinion, setHasUserSentOpinion] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -72,13 +72,10 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
         setVisibleBubbles(prev => prev + 1);
         
         // Zähle Bot-Nachrichten und zeige nach 3 die dringende Aufforderung
-        setMessagesSinceUserInput(prev => {
-          const newCount = prev + 1;
-          if (newCount >= 3 && !showUrgentPrompt) {
-            setShowUrgentPrompt(true);
-          }
-          return newCount;
-        });
+        messagesSinceUserInput.current += 1;
+        if (messagesSinceUserInput.current >= 3 && !showUrgentPrompt) {
+          setShowUrgentPrompt(true);
+        }
       }
     }, 150);
   };
@@ -113,7 +110,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     // Reset urgent prompt wenn User auf Continue klickt
     if (showUrgentPrompt) {
       setShowUrgentPrompt(false);
-      setMessagesSinceUserInput(0);
+      messagesSinceUserInput.current = 0;
     }
 
     const isBusy = isTyping || currentTypingText !== undefined;
@@ -146,7 +143,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     
     // Reset urgent prompt nach User-Input
     setShowUrgentPrompt(false);
-    setMessagesSinceUserInput(0);
+    messagesSinceUserInput.current = 0;
     setHasUserSentOpinion(true);
     
     onSend();
