@@ -261,7 +261,6 @@ const WatchDebateScreen: React.FC<WatchDebateScreenProps> = ({
         <div className="arguments-stage">
           {/* Pro Side */}
           <div className="arguments-side pro-side">
-            <div className="side-title">Pro</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="yellow" 
@@ -287,7 +286,6 @@ const WatchDebateScreen: React.FC<WatchDebateScreenProps> = ({
 
           {/* Contra Side */}
           <div className="arguments-side contra-side">
-            <div className="side-title">Contra</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="red" 

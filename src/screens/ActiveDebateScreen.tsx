@@ -42,6 +42,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   const hasStartedRef = useRef(false);
   const typingIntervalRef = useRef<number | null>(null);
   const currentBubbleRef = useRef<{text: string, color: string, side: string} | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Speech Synthesis
   const { isMuted, toggleMute, speak, stopSpeaking } = useSpeechSynthesis();
@@ -68,6 +69,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
       typingIntervalRef.current = null;
     }
     stopSpeaking();
+    setIsSpeaking(false);
     
     // Zeige den vollständigen Text des aktuellen Bots an
     if (currentBubbleRef.current) {
@@ -139,6 +141,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     
     // Starte Speech Synthesis mit Bot-spezifischer Stimme
     const botColor = color as BotColor;
+    setIsSpeaking(true);
     speak(text, { botColor });
     
     typingIntervalRef.current = window.setInterval(() => {
@@ -151,6 +154,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
           typingIntervalRef.current = null;
         }
         setCurrentTypingText(undefined);
+        setIsSpeaking(false); 
         currentBubbleRef.current = null;
         setChatHistory(prev => [...prev, {
           id: Date.now(),
@@ -262,7 +266,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   };
 
   return (
-    <div className="screen active-debate-screen">
+    <div className={`screen active-debate-screen ${showUrgentPrompt ? "prompt-active" : ""}`}>
       <ExitWarningModal 
         isOpen={showExitWarning} 
         onConfirm={handleExitConfirm} 
@@ -272,11 +276,6 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
         <span className="timer-display">{timeLeft}</span>
         <div className="top-buttons-row">
           <MuteButton isMuted={isMuted} onToggle={toggleMute} />
-          {hasStarted && currentTypingText !== undefined && (
-            <button className="skip-btn" onClick={handleSkip}>
-              Überspringen
-            </button>
-          )}
           <button className="exit-btn" onClick={handleExitClick}>
             Exit
           </button>
@@ -309,28 +308,43 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
       </section>
 
       {/* Pro vs Contra stage */}
-      <section className="active-debate-stage">
+      <section className={`active-debate-stage ${showUrgentPrompt ? "stage-minimized-light" : ""}`} style={{
+        borderRadius: "24px",
+        background: `
+          radial-gradient(
+            circle at center,
+            rgba(255,255,255,0.9) 0%,
+            rgba(255,255,255,0.6) 30%,
+            rgba(255,255,255,0.0) 60%
+          ),
+          linear-gradient(
+            90deg,
+            #eaf6f1 0%,
+            #f7f9fc 50%,
+            #e9f1fb 100%
+          )
+        `
+  }}>
         <div className="arguments-stage">
           {/* Pro Side */}
           <div className="arguments-side pro-side">
-            <div className="side-title">Pro</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="yellow" 
-                hasMic={hasStarted && currentSpeaker === "yellow" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                hasMic={hasStarted && currentSpeaker === "yellow" && (isTyping || isSpeaking) && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 isTyping={hasStarted && isTyping && currentSpeaker === "yellow"}
                 bubbleText={hasStarted && currentSpeaker === "yellow" ? currentTypingText : undefined}
-                isSpeaking={hasStarted && currentSpeaker === "yellow" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                isSpeaking={hasStarted && currentSpeaker === "yellow" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 bubbleLabel="• Prämien sind für viele Familien kaum mehr tragbar.
 • Lösung liegt in Solidarität, gezielter Entlastung und fairer Verteilung von Kosten.
 • Nicht im Abbau von Leistungen."
               />
               <CandidateCard 
                 color="gray" 
-                hasMic={hasStarted && currentSpeaker === "gray" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                hasMic={hasStarted && currentSpeaker === "gray" && (isTyping || isSpeaking) && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 isTyping={hasStarted && isTyping && currentSpeaker === "gray"}
                 bubbleText={hasStarted && currentSpeaker === "gray" ? currentTypingText : undefined}
-                isSpeaking={hasStarted && currentSpeaker === "gray" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                isSpeaking={hasStarted && currentSpeaker === "gray" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 bubbleLabel="• Keine aussergewöhnlich hohen Gesundheitskosten.
 • Es braucht kein pauschales Sparen, sondern gezielte Eingriffe bei Überversorgungen und Ineffizienzen."
               />
@@ -339,24 +353,23 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
 
           {/* Contra Side */}
           <div className="arguments-side contra-side">
-            <div className="side-title">Contra</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="red" 
-                hasMic={currentSpeaker === "red" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                hasMic={currentSpeaker === "red" && (isTyping || isSpeaking) && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 isTyping={isTyping && currentSpeaker === "red"}
                 bubbleText={currentSpeaker === "red" ? currentTypingText : undefined}
-                isSpeaking={hasStarted && currentSpeaker === "red" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                isSpeaking={hasStarted && currentSpeaker === "red" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 bubbleLabel="• Steigende Prämien sind Folge von explodierenden Kosten durch immer mehr Behandlungen.
 • Es braucht Steuerungsmöglichkeiten für Krankenkassen.
 • Ziel: Prämien senken durch Kostenkontrolle."
               />
               <CandidateCard 
                 color="green" 
-                hasMic={currentSpeaker === "green" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                hasMic={currentSpeaker === "green" && (isTyping || isSpeaking) && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 isTyping={isTyping && currentSpeaker === "green"}
                 bubbleText={currentSpeaker === "green" ? currentTypingText : undefined}
-                isSpeaking={hasStarted && currentSpeaker === "green" && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+                isSpeaking={hasStarted && currentSpeaker === "green" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
                 bubbleLabel="• Das System ist widersprüchlich: Hervorragende Medizin, aber oft zu viel davon.
 • Es gibt unnötige Untersuchungen und Eingriffe, die weder Patienten noch dem System nützen."
               />
@@ -369,9 +382,9 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
       {!hasStarted && (
         <div className="start-debate-modal-overlay">
           <div className="start-debate-modal">
-            <div className="modal-icon">🎙️</div>
             <h2 className="modal-title">Ready to start the debate?</h2>
-            <p className="modal-text">You've shared your opinion. Now let the chatbots respond!</p>
+            <p className="modal-text" style={{marginBottom: "0px"}}>You've shared your opinion.</p>
+            <p className="modal-text" style={{marginTop: "0px"}}>Now let the chatbots respond! </p>
             <button className="start-debate-btn" onClick={handleContinue}>
               Start Debate
             </button>
@@ -393,6 +406,19 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
             >
               {!hasStarted ? "Start Debate" : visibleBubbles < argumentBubbles.length ? "Continue" : "Finish Debate"}
             </button>
+            {hasStarted ? (
+            (isTyping || currentTypingText !== undefined) ? (
+              <button 
+                className="skip-icon-btn" 
+                onClick={handleSkip}
+                title="Skip current speaker"
+              >
+                ⏭
+              </button>
+            ) : (
+              <div className="skip-icon-placeholder"></div>
+            )
+          ) : null}
           </div>
         )}
 
@@ -401,7 +427,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
         {/* Aufforderung zur Teilnahme */}
         <div className={`participation-prompt ${showUrgentPrompt ? "urgent" : ""}`}>
           {showUrgentPrompt ? (
-            <span className="urgent-text">It's your turn! Share your thoughts on the debate:</span>
+            <span className="urgent-text">Share your thoughts on the debate:</span>
           ) : (
             <span className="prompt-text">Tell your opinion:</span>
           )}

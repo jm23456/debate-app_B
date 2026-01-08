@@ -32,6 +32,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
   const [hasUserSentOpinion, setHasUserSentOpinion] = useState(false);
+  const [showMessageSent, setShowMessageSent] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -198,9 +199,20 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
     
     // Reset urgent prompt nach User-Input
     setShowUrgentPrompt(false);
-    setHasUserSentOpinion(true);
     
-    onSend();
+    // Zeige "Nachricht gesendet" Feedback
+    setShowMessageSent(true);
+    
+    // Scroll zur Nachricht
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    
+    // Spürbare Pause, dann weiter zum ActiveDebateScreen
+    setTimeout(() => {
+      setShowMessageSent(false);
+      onSend(); // Geht weiter zum nächsten Screen
+    }, 1600);
   };
 
   const getBotText = (seq: number): string | undefined => {
@@ -228,11 +240,6 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
         <span className="timer-display">{introTime}</span>
         <div className="top-buttons-row">
           <MuteButton isMuted={isMuted} onToggle={toggleMute} />
-          {hasStarted && !allBotsFinished && (isTyping || currentTypingText !== undefined) && (
-            <button className="skip-btn" onClick={handleSkip}>
-              Überspringen
-            </button>
-          )}
           <button className="exit-btn" onClick={handleExitClick}>
             Exit
           </button>
@@ -260,11 +267,10 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       </section>
 
       {/* Pro vs Contra stage */}
-      <section className="debate-stage">
+      <section className={`debate-stage ${allBotsFinished ? 'stage-minimized' : ''}`}>
         <div className="arguments-stage">
           {/* Pro Side */}
           <div className="arguments-side pro-side">
-            <div className="side-title">Pro</div>
             <div className="candidates-row">
               {proBots.map((bot, i) => {
                 const seq = i;
@@ -286,7 +292,6 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
 
           {/* Contra Side */}
           <div className="arguments-side contra-side">
-            <div className="side-title">Contra</div>
             <div className="candidates-row">
               {contraBots.map((bot, i) => {
                 const seq = proBots.length + i;
@@ -307,6 +312,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
           </div>
         </div>
       </section>
+
 
       {/* Modal Overlay für Start Debate nach User-Input */}
       {!hasStarted && hasUserSentOpinion && (
@@ -330,16 +336,33 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       {/* Footer: Next Speaker Button ODER User Input */}
       {!allBotsFinished ? (
         <footer className="footer-end-row">
-          <button className="con-primary-btn" onClick={handleNextSpeaker}>
+          <button 
+            className="con-primary-btn" 
+            onClick={handleNextSpeaker}
+            disabled={hasStarted && (isTyping || currentTypingText !== undefined)}
+          >
             {!hasStarted ? "Start" : activeBot < totalBots - 1 ? "Nächster Sprecher" : "Weiter"}
           </button>
+          {hasStarted ? (
+            (isTyping || currentTypingText !== undefined) ? (
+              <button 
+                className="skip-icon-btn" 
+                onClick={handleSkip}
+                title="Skip current speaker"
+              >
+                ⏭
+              </button>
+            ) : (
+              <div className="skip-icon-placeholder"></div>
+            )
+          ) : null}
         </footer>
       ) : (
         <footer className="debate-input-footer active-input-footer">
           {/* Aufforderung zur Teilnahme */}
           <div className={`participation-prompt ${showUrgentPrompt ? "urgent" : ""}`}>
             {showUrgentPrompt ? (
-              <span className="urgent-text">🎙️ Du bist dran! Teile deine Meinung zum Thema:</span>
+              <span className="urgent-text">Du bist dran! Teile deine Meinung zum Thema:</span>
             ) : (
               <span className="prompt-text">Deine Meinung ist gefragt:</span>
             )}
@@ -369,6 +392,15 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
               Senden
             </button>
           </div>
+          {hasStarted && (isTyping || currentTypingText !== undefined) && (
+            <button 
+              className="skip-icon-btn" 
+              onClick={handleSkip}
+              title="Skip current speaker"
+            >
+              ⏭
+            </button>
+          )}
           
         </footer>
       )}

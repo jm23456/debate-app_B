@@ -13,11 +13,7 @@ const ExitWarningModal: React.FC<ExitWarningModalProps> = ({ isOpen, onConfirm, 
   return (
     <div className="exit-warning-modal-overlay">
       <div className="exit-warning-modal">
-        <div className="modal-icon">⚠️</div>
-        <h2 className="modal-title">Bist du sicher?</h2>
-        <p className="modal-text">
-          Willst du die Debatte wirklich verlassen? Dein Fortschritt geht verloren.
-        </p>
+        <h3>Bist du sicher, dass du die Debatte verlassen möchtest?</h3>
         <div className="exit-modal-buttons">
           <button className="exit-cancel-btn" onClick={onCancel}>
             Abbrechen

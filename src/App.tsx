@@ -143,7 +143,6 @@ const App: React.FC = () => {
               setActiveBot(0);}}
           />
         )}*/}
-
         {step === STEPS.ARGUMENTS_INTRO && (
           <ArgumentsIntro
             topicTitle={currentTopicTitle}

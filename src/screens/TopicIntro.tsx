@@ -43,9 +43,10 @@ const TopicIntro: React.FC<TopicIntroProps> = ({ topicTitle, onNext, onExit }) =
         maxWidth: "1000px",
         borderRadius: "24px"
       }}>
-        <header className="screen-header">
-          <p className="subtitle">{topicTitle}</p>
-          <h2 style={{ textAlign: "center" }}>Warum die Kosten steigen - und was das für uns bedeutet</h2>
+        <header className="screen-header" style={{marginBottom: "30px"}}>
+          <h4 style={{ fontSize: "28px", textAlign: "center", marginBottom: "5px" }}>Einführung ins Thema:</h4>
+          <p className="subtitle" style={{ marginTop: "10px"}}>{topicTitle}</p>
+          <h2 style={{ textAlign: "center", marginTop: "30px" }}>Warum die Kosten steigen - und was das für uns bedeutet</h2>
         </header>
         <section className="screen-body scrollable">
           <div className="topic-intro-content">

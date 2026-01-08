@@ -12,8 +12,6 @@ interface ArgumentsIntroProps {
   onContinue: () => void;
   onExit: () => void;
   introTime: string;
-  activeBot: number;
-  setActiveBot: (i: number) => void;
   totalBots: number;
   onFinalContinue: () => void;
   hasStarted: boolean;
@@ -24,8 +22,6 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   onContinue,
   onExit,
   introTime,
-  activeBot,
-  setActiveBot,
   totalBots,
   onFinalContinue,
   hasStarted,
@@ -37,6 +33,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   const [completedTexts, setCompletedTexts] = useState<Record<number, string>>({});
   const typingIntervalRef = useRef<number | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [activeBot, setActiveBot] = useState(0);
 
   // Speech Synthesis
   const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration } = useSpeechSynthesis();
@@ -114,7 +111,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
         setSpokenBots(prev => [...prev, botIndex]);
         onComplete();
       }
-    }, wordDuration);
+    }, 380);
   };
 
   // Cleanup interval on unmount
@@ -130,6 +127,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   const handleNext = () => {
     if (!hasStarted) {
       onStart();
+      setActiveBot(0);
       // Starte Typewriter für ersten Bot
       setIsTyping(true);
       setTimeout(() => {
@@ -154,8 +152,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
         typewriterEffect(allBots[nextBot].label, nextBot, () => {});
       }, 800);
     } else {
-      onFinalContinue();
-      setActiveBot(0);          
+      onFinalContinue();      
     }
   };
 
@@ -184,11 +181,6 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
         <span className="timer-display">{introTime}</span>
         <div className="top-buttons-row">
           <MuteButton isMuted={isMuted} onToggle={toggleMute} />
-          {hasStarted && (isTyping || currentTypingText !== undefined) && (
-            <button className="skip-btn" onClick={handleSkip}>
-              Überspringen
-            </button>
-          )}
           <button className="exit-btn" onClick={handleExitClick}>
             Exit
           </button>
@@ -200,11 +192,26 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
         <p className="subtitleArgu">Jede Seite stellt nun ihre Hauptargumente vor</p>
       </header>
 
-      <section className="screen-body">
+      <section className="screen-body" style={{
+        borderRadius: "24px",
+    background: `
+      radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.9) 0%,
+        rgba(255,255,255,0.6) 30%,
+        rgba(255,255,255,0.0) 60%
+      ),
+      linear-gradient(
+        90deg,
+        #eaf6f1 0%,
+        #f7f9fc 50%,
+        #e9f1fb 100%
+      )
+    `
+  }}>
         <div className="arguments-stage">
           {/* Pro Side */}
           <div className="arguments-side pro-side">
-            <div className="side-title">Pro</div>
             <div className="candidates-row">
               {proBots.map((bot, i) => {
                 const seq = i;
@@ -226,7 +233,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
 
           {/* Contra Side */}
           <div className="arguments-side contra-side">
-            <div className="side-title">Contra</div>
+
             <div className="candidates-row">
               {contraBots.map((bot, i) => {
                 const seq = proBots.length + i;
@@ -247,10 +254,39 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
           </div>
         </div>
       </section>
-      <footer className="footer-end-row">
-        <button className="con-primary-btn" onClick={handleNext}>
-          {!hasStarted ? "Start" :activeBot < totalBots -1 ? "Next Speaker" : "Continue"}
+            {/* Modal Overlay für Start Debate */}
+      {!hasStarted && (
+        <div className="start-debate-modal-overlay">
+          <div className="start-debate-modal">
+            <h3>In this first round the chatbots will state their main arguments</h3>
+            <button className="start-debate-btn" onClick={handleNext}>
+              Start
+            </button>
+          </div>
+        </div>
+      )}
+      <footer className="action-row">
+        <button 
+          className="con-primary-btn" 
+          onClick={handleNext}
+          disabled={hasStarted && (isTyping || currentTypingText !== undefined)} 
+          style={{marginTop: "15px"}}
+        >
+          {activeBot < totalBots - 1 ? "Next Speaker" : "Continue"}
         </button>
+        {hasStarted ? (
+          (isTyping || currentTypingText !== undefined) ? (
+            <button 
+              className="skip-icon-btn" 
+              onClick={handleSkip}
+              title="Skip current speaker"
+            >
+              ⏭
+            </button>
+          ) : (
+            <div className="skip-icon-placeholder"></div>
+          )
+        ) : null}
       </footer>
     </div>
   );

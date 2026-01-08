@@ -25,11 +25,11 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({
   onContinue,
 }) => {
   const roles: { id: Role; label: string; description: string }[] = [
-    {
+   /* {
       id: "WATCH",
       label: "Only observe the debate",
       description: "You observe and follow the arguments.",
-    },
+    },*/
     {
       id: "COMMENT",
       label: "Ask questions and comment",

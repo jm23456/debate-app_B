@@ -21,6 +21,7 @@ interface DebateScreenProps {
 }
 
 const DebateScreen: React.FC<DebateScreenProps> = ({
+  topicTitle,
   timeLeft,
   inputText,
   setInputText,
@@ -241,16 +242,15 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
         <span className="timer-display">{timeLeft}</span>
         <div className="top-buttons-row">
           <MuteButton isMuted={isMuted} onToggle={toggleMute} />
-          {hasStarted && currentTypingText !== undefined && (
-            <button className="skip-btn" onClick={handleSkip}>
-              Überspringen
-            </button>
-          )}
           <button className="exit-btn" onClick={handleExitClick}>
             Exit
           </button>
         </div>
       </div>
+
+      <header className="screen-header" style={{marginBottom: "10px"}}>
+        <p className="subtitle">{topicTitle}</p>
+      </header>
 
       {/* Chat-History - chronologisch */}
       <section className="debate-arguments">
@@ -279,11 +279,26 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
       </section>
 
       {/* Pro vs Contra stage */}
-      <section className="debate-stage">
+      <section className="debate-stage" style={{
+        borderRadius: "24px",
+    background: `
+      radial-gradient(
+        circle at center,
+        rgba(255,255,255,0.9) 0%,
+        rgba(255,255,255,0.6) 30%,
+        rgba(255,255,255,0.0) 60%
+      ),
+      linear-gradient(
+        90deg,
+        #eaf6f1 0%,
+        #f7f9fc 50%,
+        #e9f1fb 100%
+      )
+    `
+  }}>
         <div className="arguments-stage">
           {/* Pro Side */}
           <div className="arguments-side pro-side">
-            <div className="side-title">Pro</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="yellow" 
@@ -309,7 +324,6 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
 
           {/* Contra Side */}
           <div className="arguments-side contra-side">
-            <div className="side-title">Contra</div>
             <div className="candidates-row">
               <CandidateCard 
                 color="red" 
@@ -334,6 +348,20 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Modal Overlay für Start Debate */}
+      {!hasStarted && (
+        <div className="start-debate-modal-overlay">
+          <div className="start-debate-modal">
+            <div className="modal-icon">🎙️</div>
+            <h2 className="modal-title">Ready to start the debate?</h2>
+            <p className="modal-text">The chatbots will discuss the topic. You can follow along and ask questions!</p>
+            <button className="start-debate-btn" onClick={onStart}>
+              Start Debate
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Input area */}
       <footer className="debate-input-footer">
@@ -360,11 +388,28 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             Send
           </button>
         </div>
-        <div className="footer-end-row">
-          <button className="con-primary-btn" onClick={handleContinue}>
-            {!hasStarted ? "Start Debate" : visibleBubbles < argumentBubbles.length ? "Continue" : "Finish Debate"}
-          </button>
-        </div>
+        {hasStarted && (
+          <div className="action-row">
+            <button 
+              className="con-primary-btn" 
+              onClick={handleContinue}
+              disabled={isTyping || currentTypingText !== undefined}
+            >
+              {visibleBubbles < argumentBubbles.length ? "Continue" : "Finish Debate"}
+            </button>
+            {(isTyping || currentTypingText !== undefined) ? (
+              <button 
+                className="skip-icon-btn" 
+                onClick={handleSkip}
+                title="Skip current speaker"
+              >
+                ⏭
+              </button> 
+            ) : (
+              <div className="skip-icon-placeholder"></div>
+            )}
+          </div>
+        )}
       </footer>
     </div>
   );
