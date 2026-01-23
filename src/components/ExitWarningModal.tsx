@@ -16,12 +16,12 @@ const ExitWarningModal: React.FC<ExitWarningModalProps> = ({ isOpen, onConfirm, 
     <div className="exit-warning-modal-overlay">
       <div className="exit-warning-modal" style={{padding: 0, overflow: "hidden"}}>
         <div style={{
-              background: "linear-gradient(135deg, #f9d1d1 0%, #fba9a9 100%)",
+              background: "#FEE2E2",
               padding: "1rem 1rem",
               borderRadius: "1.5rem 1.5rem 0 0",
               marginBottom: "0.5rem"
             }}>
-        <p style={{fontSize: "20px", fontWeight: "600", margin: 0, color: "#cb1919"}}>{t("exit2")}</p>
+        <p style={{fontSize: "20px", fontWeight: "600", margin: 0, color: "#D32F2F"}}>{t("exit2")}</p>
         </div>
         <div style={{padding: "0rem 1.5rem 1rem 0.5rem"}}>
           <p style={{fontSize: "17px"}}>{t("exitSure")}</p>

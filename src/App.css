@@ -1790,8 +1790,8 @@ body {
   text-align: center;
   box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.25);
   animation: slideUp 0.4s ease;
-  max-width: 25rem;
-  width: 90vw;
+  max-width: 20rem;
+  width: 70vw;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -1800,6 +1800,7 @@ body {
   gap: 1rem;
   justify-content: center;
   margin-top: 1.5rem;
+  height: 48px;
 }
 
 .exit-cancel-btn {
@@ -1808,7 +1809,7 @@ body {
   border: none;
   border-radius: 0.75rem;
   padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1824,7 +1825,7 @@ body {
   border: none;
   border-radius: 0.75rem;
   padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
