@@ -240,7 +240,7 @@ body {
 
 .topic-btn {
   border-radius: 12px;
-  padding: 14px 65px;
+  padding: 14px 35px;
   font-size: 16px;
   border: none;
   cursor: pointer;
@@ -250,6 +250,15 @@ body {
   transition: 0.15s ease;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
   height: 46px;
+}
+
+/* Sprachspezifisches Padding */
+.topic-btn.lang-en {
+  padding: 14px 35px;
+}
+
+.topic-btn.lang-de {
+  padding: 14px 50px;
 }
 
 .topic-btn:hover {

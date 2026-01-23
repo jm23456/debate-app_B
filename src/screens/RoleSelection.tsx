@@ -26,7 +26,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({
   setCustomTopic,
   onContinue,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const roles: { id: Role; label: string; description: string }[] = [
    /* {
       id: "WATCH",
@@ -51,7 +51,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({
   };
   const HEALTH_INSURANCE_TOPIC = t("healthInsurance");
 
-  const topics = [t("topic") + " 1", HEALTH_INSURANCE_TOPIC, t("topic") + " 3"];
+  const topics = [t("bilateral"), HEALTH_INSURANCE_TOPIC, t("atom")];
   const [customTopicConfirmed, setCustomTopicConfirmed] = useState(false);
 
   const handleTopicSelect = (topic: string) => {
@@ -147,6 +147,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({
                 key={topic}
                 className={
                   "topic-btn outline" +
+                  ` lang-${language}` +
                   (selectedTopic === topic && !customTopic
                   ? " topic-btn-active"
                   : "")
