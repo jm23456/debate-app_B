@@ -10,13 +10,13 @@ interface VoiceConfig {
 }
 
 // Verschiedene Stimm-Konfigurationen für jeden Bot
-// Stärkere Pitch-Unterschiede für bessere Unterscheidbarkeit auf allen Geräten
+// Stärkere Rate-Unterschiede für bessere Unterscheidbarkeit auf iOS
 const voiceConfigs: Record<BotColor, VoiceConfig> = {
-  red: { pitch: 1.2, rate: 1.05, voiceType: 'female' },     // Sehr hohe Stimme 
-  yellow: { pitch: 0.8, rate: 0.95, voiceType: 'male' },    // Sehr tiefe Stimme
-  blue: { pitch: 0.91, rate: 1.0, voiceType: 'male'},        // Mittlere Stimme
-  green: { pitch: 1.1, rate: 1.08, voiceType: 'male' },      // Höhere, schnellere Stimme
-  gray: { pitch: 1.25, rate: 0.92, voiceType: 'female' },     // Hohe, langsamere Stimme
+  red: { pitch: 1.2, rate: 1.15, voiceType: 'female' },      // Etwas schnelle Stimme 
+  yellow: { pitch: 0.8, rate: 0.75, voiceType: 'male' },     // Sehr langsame Stimme
+  blue: { pitch: 0.91, rate: 1.0, voiceType: 'male'},        // Normale Stimme
+  green: { pitch: 1.1, rate: 1.25, voiceType: 'male' },      // Schnelle Stimme
+  gray: { pitch: 1.25, rate: 0.85, voiceType: 'female' },    // Langsame Stimme
 };
 
 interface SpeakOptions {
