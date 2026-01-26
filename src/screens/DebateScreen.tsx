@@ -52,6 +52,8 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
   const [showDebateFinished, setShowDebateFinished] = useState(false);
+  const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
+  const [isInitialPrompt, setIsInitialPrompt] = useState(true);
 
   type SpeakerKey = "A" | "B" | "C" | "D" | "E" | "SYSTEM";
 
@@ -272,11 +274,13 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
     }, 380);
   };
 
-  // Starte automatisch die erste Nachricht beim Laden
+  // Starte automatisch die erste Nachricht beim Laden - aber nur wenn kein initialer Prompt aktiv ist
   useEffect(() => {
     if(!hasStarted) return;
     if (!hasStartedRef.current) {
       hasStartedRef.current = true;
+      // Nicht automatisch starten wenn initialer Prompt noch aktiv ist
+      if (isInitialPrompt) return;
       if (!argumentBubbles.length) return;
         const firstBubble = argumentBubbles[0];
       setCurrentSpeaker(firstBubble.color);
@@ -294,6 +298,13 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStarted]);
 
+  // Zeige den initialen Prompt wenn die Debatte startet
+  useEffect(() => {
+    if (hasStarted && isInitialPrompt && !showUrgentPrompt) {
+      setShowUrgentPrompt(true);
+    }
+  }, [hasStarted, isInitialPrompt, showUrgentPrompt]);
+
   // Auto-scroll wenn sich chatHistory oder isTyping ändert
   useEffect(() => {
     scrollToBottom();
@@ -302,8 +313,32 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
     const handleContinue = () => {
     if (!hasStarted) {
       onStart();
+      // showUrgentPrompt wird durch useEffect gesetzt wenn hasStarted true wird
       return;
     }
+    
+    // Reset urgent prompt wenn User auf Continue klickt
+    if (showUrgentPrompt) {
+      const wasInitialPrompt = isInitialPrompt;
+      setShowUrgentPrompt(false);
+      setIsInitialPrompt(false);
+      
+      // Wenn es der initiale Prompt war, starte den ersten Chatbot
+      if (wasInitialPrompt && visibleBubbles === 0) {
+        const firstBubble = argumentBubbles[0];
+        if (firstBubble) {
+          setCurrentSpeaker(firstBubble.color);
+          setIsTyping(true);
+          
+          setTimeout(() => {
+            setIsTyping(false);
+            typewriterEffect(firstBubble.text, firstBubble.color, firstBubble.side);
+          }, 1500);
+        }
+        return;
+      }
+    }
+    
     const isBusy = isTyping || currentTypingText !== undefined;
 
     if (visibleBubbles < argumentBubbles.length && !isBusy) {
@@ -337,6 +372,8 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
     
+    const wasInitialPrompt = isInitialPrompt;
+    
     setChatHistory(prev => [...prev, {
       id: Date.now(),
       type: "user",
@@ -344,7 +381,27 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
       isComplete: true
     }]);
     
+    // Reset urgent prompt nach User-Input
+    setShowUrgentPrompt(false);
+    setIsInitialPrompt(false);
+    
     onSend();
+    
+    // Wenn es der initiale Prompt war und Debatte gestartet, starte den ersten Chatbot
+    if (wasInitialPrompt && hasStarted && visibleBubbles === 0) {
+      setTimeout(() => {
+        const firstBubble = argumentBubbles[0];
+        if (firstBubble) {
+          setCurrentSpeaker(firstBubble.color);
+          setIsTyping(true);
+          
+          setTimeout(() => {
+            setIsTyping(false);
+            typewriterEffect(firstBubble.text, firstBubble.color, firstBubble.side);
+          }, 1500);
+        }
+      }, 500);
+    }
   };
 
 
@@ -547,9 +604,20 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
         </div>
       )}
 
+      {/* Leichtes Overlay für "It's your turn" urgent prompt */}
+      {showUrgentPrompt && (
+        <div className="urgent-prompt-overlay-light"></div>
+      )}
+
       {/* Input area */}
-      <footer className="debate-input-footer">
-        <div className="custom-topic-row">
+      <footer className="debate-input-footer" style={{marginTop: "10px"}}>
+        {/* Urgent Prompt - nur wenn aktiv */}
+        {showUrgentPrompt && (
+          <div className="participation-prompt urgent">
+            <span className="urgent-text">{isInitialPrompt ? t("initialPrompt") : t("urgentPrompt")}</span>
+          </div>
+        )}
+        <div className="custom-topic-row" style={{marginTop: "10px"}}>
           <input
             className="text-input flex-1"
             placeholder={t("inputPlaceholder")}

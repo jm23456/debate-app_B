@@ -44,6 +44,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   const [currentTypingText, setCurrentTypingText] = useState<string | undefined>(undefined);
   const messagesSinceUserInput = useRef(0);
   const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
+  const [isInitialPrompt, setIsInitialPrompt] = useState(true);
   const [hasUserSentOpinion, setHasUserSentOpinion] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -341,11 +342,13 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     }, 380);
   };
 
-  // Starte automatisch die erste Nachricht beim Laden
+  // Starte automatisch die erste Nachricht beim Laden - aber nur wenn kein initialer Prompt aktiv ist
   useEffect(() => {
     if (!hasStarted) return;
     if (!hasStartedRef.current) {
       hasStartedRef.current = true;
+      // Nicht automatisch starten wenn initialer Prompt noch aktiv ist
+      if (isInitialPrompt) return;
       if (!argumentBubbles.length) return;
         const firstBubble = argumentBubbles[0];
       setCurrentSpeaker(firstBubble.color);
@@ -363,6 +366,13 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStarted]);
 
+  // Zeige den initialen Prompt wenn die Debatte startet
+  useEffect(() => {
+    if (hasStarted && isInitialPrompt && !showUrgentPrompt) {
+      setShowUrgentPrompt(true);
+    }
+  }, [hasStarted, isInitialPrompt, showUrgentPrompt]);
+
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory, isTyping]);
@@ -370,13 +380,31 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   const handleContinue = () => {
     if (!hasStarted) {
       onStart();
+      // showUrgentPrompt wird durch useEffect gesetzt wenn hasStarted true wird
       return;
     }
 
     // Reset urgent prompt wenn User auf Continue klickt
     if (showUrgentPrompt) {
+      const wasInitialPrompt = isInitialPrompt;
       setShowUrgentPrompt(false);
+      setIsInitialPrompt(false);
       messagesSinceUserInput.current = 0;
+      
+      // Wenn es der initiale Prompt war, starte den ersten Chatbot
+      if (wasInitialPrompt && visibleBubbles === 0) {
+        const firstBubble = argumentBubbles[0];
+        if (firstBubble) {
+          setCurrentSpeaker(firstBubble.color);
+          setIsTyping(true);
+          
+          setTimeout(() => {
+            setIsTyping(false);
+            typewriterEffect(firstBubble.text, firstBubble.color, firstBubble.side);
+          }, 1500);
+        }
+        return;
+      }
     }
 
     const isBusy = isTyping || currentTypingText !== undefined;
@@ -412,6 +440,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     if (!inputText.trim()) return;
     
     const wasUrgentPrompt = showUrgentPrompt;
+    const wasInitialPrompt = isInitialPrompt;
     
     setChatHistory(prev => [...prev, {
       id: Date.now(),
@@ -424,12 +453,30 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     
     // Reset urgent prompt nach User-Input
     setShowUrgentPrompt(false);
+    setIsInitialPrompt(false);
     messagesSinceUserInput.current = 0;
     setHasUserSentOpinion(true);
     
     onSend();
     
-    // Wenn urgentPrompt aktiv war, automatisch Continue ausführen
+    // Wenn es der initiale Prompt war und Debatte gestartet, starte den ersten Chatbot
+    if (wasInitialPrompt && hasStarted && visibleBubbles === 0) {
+      setTimeout(() => {
+        const firstBubble = argumentBubbles[0];
+        if (firstBubble) {
+          setCurrentSpeaker(firstBubble.color);
+          setIsTyping(true);
+          
+          setTimeout(() => {
+            setIsTyping(false);
+            typewriterEffect(firstBubble.text, firstBubble.color, firstBubble.side);
+          }, 1500);
+        }
+      }, 500);
+      return;
+    }
+    
+    // Wenn urgentPrompt aktiv war (aber nicht initial), automatisch Continue ausführen
     if (wasUrgentPrompt && hasStarted) {
       setTimeout(() => {
         const isBusy = isTyping || currentTypingText !== undefined;
@@ -666,7 +713,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
         {/* Aufforderung zur Teilnahme */}
         <div className={`participation-prompt ${showUrgentPrompt ? "urgent" : ""}`}>
           {showUrgentPrompt ? (
-            <span className="urgent-text">{t("urgentPrompt")}</span>
+            <span className="urgent-text">{isInitialPrompt ? t("initialPrompt") : t("urgentPrompt")}</span>
           ) : (
             <span className="prompt-text">{t('activeInput')}</span>
           )}
