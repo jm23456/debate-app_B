@@ -18,10 +18,11 @@ interface CandidateCardProps {
   isTyping?: boolean;
   bubbleLabel?: string;
   isSpeaking?: boolean;
+  isPaused?: boolean;
 }
 
 
-const CandidateCard: React.FC<CandidateCardProps> = ({ color, hasMic = false, showBubble = false, bubbleText, isTyping = false, bubbleLabel = "Introduction", isSpeaking = false, isPause = false }) => {
+const CandidateCard: React.FC<CandidateCardProps> = ({ color, hasMic = false, showBubble = false, bubbleText, isTyping = false, bubbleLabel = "Introduction", isSpeaking = false, isPaused = false }) => {
   const [hovered, setHovered] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,17 +33,17 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ color, hasMic = false, sh
   useEffect(() => {
     if (!videoRef.current) return;
 
-    if (isSpeaking && hasMic && !isPause) {
+    if (isSpeaking && hasMic && !isPaused) {
       videoRef.current.currentTime = 0;
         videoRef.current.play();
       } else {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
-        if (!isPause) {
+        if (!isPaused) {
           videoRef.current.currentTime = 0;
         }
       }
-  }, [isSpeaking, hasMic, isPause]);
+  }, [isSpeaking, hasMic, isPaused]);
   
   // Auto-scroll nach unten wenn Text sich ändert
   useEffect(() => {
@@ -81,7 +82,7 @@ const CandidateCard: React.FC<CandidateCardProps> = ({ color, hasMic = false, sh
               <span className="dot"></span>
             </span>
           ) : bubbleText !== undefined ? (
-            <span>{bubbleText}{!isPause && <span className="cursor">|</span>}</span>
+            <span>{bubbleText}{!isPaused && <span className="cursor">|</span>}</span>
           ) : (
             <span>{bubbleLabel}</span>
           )}
