@@ -44,26 +44,29 @@ const App: React.FC = () => {
   const resetIntroTimer = () => setIntroTime(1 * 60); // Reset auf 1 Minute
   const [activeBot, setActiveBot] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Timer für ARGUMENTS_INTRO (1 Min pro Speaker)
   useEffect(() => {
     if (!hasStarted) return;
     if (step !== STEPS.ARGUMENTS_INTRO) return;
+    if (isPaused) return;
     const id = window.setInterval(() => {
       setIntroTime((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => window.clearInterval(id);
-  }, [step, hasStarted]);
+  }, [step, hasStarted, isPaused]);
 
   // Timer für DEBATE (15 Min)
   useEffect(() => {
     if (step !== STEPS.DEBATE) return;
     if (!hasStarted) return;
+    if (isPaused) return;
     const id = window.setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => window.clearInterval(id);
-  }, [step, hasStarted]);
+  }, [step, hasStarted, isPaused]);
 
 
   const formatTime = (seconds: number): string => {
@@ -172,6 +175,7 @@ const App: React.FC = () => {
               setHasStarted(true);
               setIntroTime(1 * 60);
               setActiveBot(0);}}
+            setIsPaused={setIsPaused}
           />
         )}
 
@@ -185,6 +189,7 @@ const App: React.FC = () => {
               setHasStarted(false);
               setCustomTopic("");
               setSelectedTopic("");
+              setIsPaused(false);
             }}
             inputText={inputText}
             setInputText={setInputText}
@@ -199,6 +204,7 @@ const App: React.FC = () => {
               setHasStarted(true);
               setIntroTime(1 * 60);
               setActiveBot(0);
+              setIsPaused(false);
             }}
           />
         )}
@@ -217,6 +223,7 @@ const App: React.FC = () => {
               setCustomTopic("");
               setSelectedTopic("");
               setUserIntroMessage(null);
+              setIsPaused(false);
             }}
             hasStarted={hasStarted}
             onStart={() => {
@@ -225,6 +232,8 @@ const App: React.FC = () => {
               setActiveBot(0);
             }}
             userIntroMessage={userIntroMessage}
+            isPaused={isPaused}
+            setIsPaused={setIsPaused}
           />
         )}
 
@@ -239,12 +248,15 @@ const App: React.FC = () => {
               setTimeLeft(15 * 60);
               setCustomTopic("");
               setSelectedTopic("");
+              setIsPaused(false);
             }}
             hasStarted={hasStarted}
             onStart={() => {
               setHasStarted(true);
               setTimeLeft(15 * 60);
               setActiveBot(0);}}
+            isPaused={isPaused}
+            setIsPaused={setIsPaused}
           />
         )}
 
@@ -268,7 +280,9 @@ const App: React.FC = () => {
             onStart={() => {
               setHasStarted(true);
               setTimeLeft(15 * 60);
-              setActiveBot(0);}}
+              setActiveBot(0);
+              setIsPaused(false);
+            }}
           />
         )}
 

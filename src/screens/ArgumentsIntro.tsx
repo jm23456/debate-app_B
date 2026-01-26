@@ -20,6 +20,7 @@ interface ArgumentsIntroProps {
   onFinalContinue: () => void;
   hasStarted: boolean;
   onStart: () => void;
+  setIsPaused?: (paused: boolean) => void;
 }
 
 const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
@@ -30,6 +31,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   onFinalContinue,
   hasStarted,
   onStart,
+  setIsPaused,
 }) => {
   const { t, language } = useLanguage();
   const [spokenBots, setSpokenBots] = useState<number[]>([]); 
@@ -37,6 +39,8 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   const [currentTypingText, setCurrentTypingText] = useState<string | undefined>(undefined);
   const [completedTexts, setCompletedTexts] = useState<Record<number, string>>({});
   const typingIntervalRef = useRef<number | null>(null);
+  const isPausedRef = useRef(false);
+  const pausedWordCountRef = useRef(0);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [activeBot, setActiveBot] = useState(0);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
@@ -73,7 +77,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   }, [introTime, hasStarted, showTimeExpired]);
 
   // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration } = useSpeechSynthesis();
+  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)
   const handleSkip = () => {
@@ -94,10 +98,14 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
+    setIsPaused(true);
+    isPausedRef.current = true;
+    pauseSpeaking();
   };
 
   const handleExitConfirm = () => {
     setShowExitWarning(false);
+    isPausedRef.current = false;
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
@@ -108,6 +116,9 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    resumeSpeaking();
   };
 
   // Pro: B (yellow) = Solidarität & soziale Perspektive, D (gray) = Ökonomische Systemperspektive
@@ -142,14 +153,22 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
 
   const typewriterEffect = (text: string, botIndex: number, onComplete: () => void) => {
     const words = text.split(" ");
-    let wordCount = 0;
-    setCurrentTypingText("");
+    let wordCount = pausedWordCountRef.current || 0;
+    pausedWordCountRef.current = 0;
+
+    if(wordCount === 0){
+      setCurrentTypingText("");
+    }
     
     // Bot-Farbe ermitteln und Speech Synthesis mit spezifischer Stimme starten
     const botColor = allBots[botIndex].color as BotColor;
     speak(text, { botColor, lang: language });
     
     typingIntervalRef.current = window.setInterval(() => {
+      if (isPausedRef.current) {
+        pausedWordCountRef.current = wordCount;
+        return;
+      }
       wordCount++;
       if (wordCount <= words.length) {
         setCurrentTypingText(words.slice(0, wordCount).join(" "));
@@ -308,6 +327,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
                   isTyping={hasStarted && isTyping && activeBot === i}
                   bubbleLabel={hasStarted ? getBubbleLabel(i) : ""}
                   isSpeaking={hasStarted && activeBot === i && (isTyping || currentTypingText !== undefined)}
+                  isPaused={showExitWarning}
                 />
               );
             })}

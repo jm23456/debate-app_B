@@ -23,6 +23,7 @@ interface ActiveDebateScreenProps {
   hasStarted: boolean;
   onStart: () => void;
   userIntroMessage?: string | null;
+  setIsPaused: (paused: boolean) => void;
 }
 
 const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
@@ -34,6 +35,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   hasStarted,
   onStart,
   userIntroMessage,
+  setIsPaused,
 }) => {
   const [visibleBubbles, setVisibleBubbles] = useState(0);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -48,6 +50,8 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   const hasStartedRef = useRef(false);
   const typingIntervalRef = useRef<number | null>(null);
   const currentBubbleRef = useRef<{text: string, color: Color, side: "pro" | "contra" | "undecided"} | null>(null);
+  const isPausedRef= useRef(false);
+  const pausedWordCountRef = useRef(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { t, language } = useLanguage();
   const [showTimeExpired, setShowTimeExpired] = useState(false);
@@ -84,21 +88,67 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
   }, [timeLeft, hasStarted, showTimeExpired]);
 
   // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking } = useSpeechSynthesis();
+  const { isMuted, toggleMute, speak, stopSpeaking, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
 
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
+    setIsPaused(true);
+    pauseSpeaking();
+    // Pausiere auch den Typewriter-Effekt
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
   };
 
   const handleExitConfirm = () => {
     setShowExitWarning(false);
+    setIsPaused(false);
     stopSpeaking();
     onExit();
   };
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
+    setIsPaused(false);
+    resumeSpeaking();
+    // Setze den Typewriter-Effekt fort, falls ein Text gerade angezeigt wurde
+    if (currentBubbleRef.current && currentTypingText !== undefined) {
+      const { text, color, side } = currentBubbleRef.current;
+      const words = text.split(" ");
+      const currentWordCount = currentTypingText ? currentTypingText.split(" ").length : 0;
+      let wordCount = currentWordCount;
+      
+      typingIntervalRef.current = window.setInterval(() => {
+        wordCount++;
+        if (wordCount <= words.length) {
+          setCurrentTypingText(words.slice(0, wordCount).join(" "));
+        } else {
+          if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+          }
+          setCurrentTypingText(undefined);
+          setIsSpeaking(false); 
+          currentBubbleRef.current = null;
+          setChatHistory(prev => [...prev, {
+            id: Date.now(),
+            type: "bot",
+            color: color as Color,
+            text: text,
+            side: side as "pro" | "contra" | "undecided",
+            isComplete: true
+          }]);
+          setVisibleBubbles(prev => prev + 1);
+          
+          messagesSinceUserInput.current += 1;
+          if (messagesSinceUserInput.current >= 4 && !showUrgentPrompt) {
+            setShowUrgentPrompt(true);
+          }
+        }
+      }, 380);
+    }
   };
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)
@@ -241,12 +291,15 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
 
   const typewriterEffect = (text: string, color: Color, side: "pro" | "contra" | "undecided") => {
     const words = text.split(" ");
-    let wordCount = 0;
+    let wordCount = pausedWordCountRef.current || 0;
+    pausedWordCountRef.current = 0;
     
     // Speichere aktuelle Bubble-Daten für Skip
     currentBubbleRef.current = { text, color, side };
     
-    setCurrentTypingText("");
+    if (wordCount === 0){
+      setCurrentTypingText("");
+    }
     
     // Starte Speech Synthesis mit Bot-spezifischer Stimme
     const botColor = color as BotColor;
@@ -254,6 +307,10 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
     speak(text, { botColor, lang: language });
     
     typingIntervalRef.current = window.setInterval(() => {
+      if (isPausedRef.current) {
+        pausedWordCountRef.current = wordCount;
+        return;
+      }
       wordCount++;
       if (wordCount <= words.length) {
         setCurrentTypingText(words.slice(0, wordCount).join(" "));
@@ -511,6 +568,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "yellow"}
             bubbleText={hasStarted && currentSpeaker === "yellow" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "yellow" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Prämien sind für viele Familien kaum mehr tragbar.
 • Lösung liegt in Solidarität, gezielter Entlastung und fairer Verteilung von Kosten.
 • Nicht im Abbau von Leistungen."
@@ -521,6 +579,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "gray"}
             bubbleText={hasStarted && currentSpeaker === "gray" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "gray" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Keine aussergewöhnlich hohen Gesundheitskosten.
 • Es braucht kein pauschales Sparen, sondern gezielte Eingriffe bei Überversorgungen und Ineffizienzen."
           />
@@ -530,6 +589,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
             isTyping={isTyping && currentSpeaker === "red"}
             bubbleText={currentSpeaker === "red" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "red" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Steigende Prämien sind Folge von explodierenden Kosten durch immer mehr Behandlungen.
 • Es braucht Steuerungsmöglichkeiten für Krankenkassen.
 • Ziel: Prämien senken durch Kostenkontrolle."
@@ -540,6 +600,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
             isTyping={isTyping && currentSpeaker === "green"}
             bubbleText={currentSpeaker === "green" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "green" && isSpeaking && !showUrgentPrompt && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Das System ist widersprüchlich: Hervorragende Medizin, aber oft zu viel davon.
 • Es gibt unnötige Untersuchungen und Eingriffe, die weder Patienten noch dem System nützen."
           />

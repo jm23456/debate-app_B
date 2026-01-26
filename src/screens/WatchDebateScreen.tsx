@@ -15,6 +15,8 @@ interface WatchDebateScreenProps {
   onExit: () => void;
   hasStarted: boolean;
   onStart: () => void;
+  isTimerPaused: boolean;
+  setIsTimerPaused: (paused: boolean) => void;
 }
 
 const WatchDebateScreen: React.FC<WatchDebateScreenProps> = ({
@@ -22,6 +24,8 @@ const WatchDebateScreen: React.FC<WatchDebateScreenProps> = ({
   onExit,
   hasStarted,
   onStart,
+  isTimerPaused,
+  setIsTimerPaused,
 }) => {
   const { language } = useLanguage();
   const [visibleBubbles, setVisibleBubbles] = useState(0);
@@ -35,21 +39,63 @@ const WatchDebateScreen: React.FC<WatchDebateScreenProps> = ({
   const currentBubbleRef = useRef<{text: string, color: string, side: string} | null>(null);
 
   // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration } = useSpeechSynthesis();
+  const { isMuted, toggleMute, speak, stopSpeaking, pauseSpeaking, resumeSpeaking, getWordDuration } = useSpeechSynthesis();
 
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
+    setIsTimerPaused(true);
+    pauseSpeaking();
+    // Pausiere auch den Typewriter-Effekt
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
   };
 
   const handleExitConfirm = () => {
     setShowExitWarning(false);
+    setIsTimerPaused(false);
     stopSpeaking();
     onExit();
   };
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
+    setIsTimerPaused(false);
+    resumeSpeaking();
+    // Setze den Typewriter-Effekt fort, falls ein Text gerade angezeigt wurde
+    if (currentBubbleRef.current && currentTypingText !== undefined) {
+      const { text, color, side } = currentBubbleRef.current;
+      const words = text.split(" ");
+      const currentWordCount = currentTypingText ? currentTypingText.split(" ").length : 0;
+      let wordCount = currentWordCount;
+      const botColor = color as BotColor;
+      const wordDuration = getWordDuration(text, botColor);
+      
+      typingIntervalRef.current = window.setInterval(() => {
+        wordCount++;
+        if (wordCount <= words.length) {
+          setCurrentTypingText(words.slice(0, wordCount).join(" "));
+        } else {
+          if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+          }
+          setCurrentTypingText(undefined);
+          currentBubbleRef.current = null;
+          setChatHistory(prev => [...prev, {
+            id: Date.now(),
+            type: "bot",
+            color: color,
+            text: text,
+            side: side,
+            isComplete: true
+          }]);
+          setVisibleBubbles(prev => prev + 1);
+        }
+      }, wordDuration);
+    }
   };
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)

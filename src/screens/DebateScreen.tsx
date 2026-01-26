@@ -22,6 +22,7 @@ interface DebateScreenProps {
   onExit: () => void;
   hasStarted: boolean;
   onStart: () => void;
+  setIsPaused: (value: boolean) => void;
 }
 
 const DebateScreen: React.FC<DebateScreenProps> = ({
@@ -33,6 +34,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   onExit,
   hasStarted,
   onStart,
+  setIsPaused
 }) => {
   type Color = "red" | "yellow" | "green" | "gray" | "blue";
   const { t, language } = useLanguage();
@@ -45,6 +47,8 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const currentBubbleRef = useRef<{text: string, color: Color, side: "pro" | "contra" | "undecided"} | null>(null);
+  const isPausedRef = useRef(false);
+  const pausedWordCountRef = useRef(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
   const [showDebateFinished, setShowDebateFinished] = useState(false);
@@ -77,21 +81,28 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   }, [timeLeft, hasStarted, showTimeExpired]);
 
   // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration } = useSpeechSynthesis();
+  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
 
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
+    setIsPaused(true);
+    isPausedRef.current = true;
+    pauseSpeaking();
   };
 
   const handleExitConfirm = () => {
     setShowExitWarning(false);
+    isPausedRef.current = false;
     stopSpeaking();
     onExit();
   };
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    resumeSpeaking();
   };
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)
@@ -212,13 +223,15 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   // Typewriter-Effekt: Text Wort für Wort in der Chatbot-Bubble aufbauen
   const typewriterEffect = (text: string, color: Color, side: "pro" | "contra" | "undecided") => {
     const words = text.split(" ");
-    let wordCount = 0;
+    let wordCount = pausedWordCountRef.current || 0;
+    pausedWordCountRef.current = 0;
     
     // Speichere aktuelle Bubble-Daten für Skip
     currentBubbleRef.current = { text, color, side };
     
     // Start mit leerem Text in der Bubble
-    setCurrentTypingText("");
+    if (wordCount === 0){
+      setCurrentTypingText("");}
     
     // Starte Speech Synthesis mit Bot-spezifischer Stimme
     const botColor = color as BotColor;
@@ -227,6 +240,10 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
     
     
     typingIntervalRef.current = window.setInterval(() => {
+      if (isPausedRef.current) {  
+        pausedWordCountRef.current = wordCount;
+        return;
+      }
       wordCount++;
       
       if (wordCount <= words.length) {
@@ -455,6 +472,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "yellow"}
             bubbleText={hasStarted && currentSpeaker === "yellow" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "yellow" && isSpeaking && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Prämien sind für Viele kaum mehr tragbar.
 • Lösung liegt in Solidarität, gezielter Entlastung und fairer Verteilung von Kosten.
 • Nicht im Abbau von Leistungen."
@@ -465,6 +483,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "gray"}
             bubbleText={hasStarted && currentSpeaker === "gray" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "gray" && isSpeaking && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Keine aussergewöhnlich hohen Gesundheitskosten.
                           • Es braucht kein pauschales Sparen, sondern gezielte Eingriffe bei Überversorgungen und Ineffizienzen."
           />
@@ -474,6 +493,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "blue"}
             bubbleText={hasStarted && currentSpeaker === "blue" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "blue" && isSpeaking && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Prämien steigen stärker als Löhne.
 • Gefühl von Ineffizienz und unklarer Verantwortung.
 • Erwartung: Nachvollziehbarer Umgang mit Beiträgen."
@@ -484,6 +504,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "red"}
             bubbleText={hasStarted && currentSpeaker === "red" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "red" && isSpeaking && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Steigende Prämien sind Folge von explodierenden Kosten durch immer mehr Behandlungen.
 • Es braucht Steuerungsmöglichkeiten für Krankenkassen.
 • Ziel: Prämien senken durch Kostenkontrolle."
@@ -494,6 +515,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
             isTyping={hasStarted && isTyping && currentSpeaker === "green"}
             bubbleText={hasStarted && currentSpeaker === "green" ? currentTypingText : undefined}
             isSpeaking={hasStarted && currentSpeaker === "green" && isSpeaking && visibleBubbles < argumentBubbles.length}
+            isPaused={showExitWarning}
             bubbleLabel="• Das System ist widersprüchlich: Hervorragende Medizin, aber oft zu viel davon.
 • Es gibt unnötige Untersuchungen und Eingriffe, die weder Patienten noch dem System nützen."
           />

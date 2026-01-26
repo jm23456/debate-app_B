@@ -31,6 +31,8 @@ interface UseSpeechSynthesisReturn {
   toggleMute: () => void;
   speak: (text: string, options?: SpeakOptions) => void;
   stopSpeaking: () => void;
+  pauseSpeaking: () => void;
+  resumeSpeaking: () => void;
   isSpeaking: boolean;
   getWordDuration: (text: string, botColor?: BotColor) => number;
 }
@@ -122,6 +124,18 @@ export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
     lastSpokenTextRef.current = '';
   }, []);
 
+  const pauseSpeaking = useCallback(() => {
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+    }
+  }, []);
+
+  const resumeSpeaking = useCallback(() => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  }, []);
+
   // Berechne durchschnittliche Wort-Dauer basierend auf Sprechgeschwindigkeit
   const getWordDuration = useCallback((_text: string, botColor: BotColor = 'yellow'): number => {
     const config = voiceConfigs[botColor];
@@ -193,6 +207,8 @@ export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
     toggleMute,
     speak,
     stopSpeaking,
+    pauseSpeaking,
+    resumeSpeaking,
     isSpeaking,
     getWordDuration
   };

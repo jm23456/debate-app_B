@@ -22,6 +22,7 @@ interface ActiveArgumentsScreenProps {
   onExit: () => void;
   hasStarted: boolean;
   onStart: () => void;
+  setIsPaused?: (paused: boolean) => void;
 }
 
 const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
@@ -32,6 +33,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   onExit,
   hasStarted,
   onStart,
+  setIsPaused
 }) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
@@ -75,7 +77,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   }, [introTime, hasStarted, showTimeExpired]);
   
   // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking } = useSpeechSynthesis();
+  const { isMuted, toggleMute, speak, stopSpeaking, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
   
   // Chatbot speaking logic
   const [activeBot, setActiveBot] = useState(0);
@@ -88,6 +90,8 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   const [currentTypingText, setCurrentTypingText] = useState<string | undefined>(undefined);
   const [completedTexts, setCompletedTexts] = useState<Record<number, string>>({});
   const typingIntervalRef = useRef<number | null>(null);
+  const isPausedRef= useRef(false);
+  const pausedWordCountRef = useRef(0);
 
   // Mock debate data
   const debateData = (language === "de" ? mockDebateDE : mockDebateEN) as DebateData;
@@ -155,10 +159,14 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
+    setIsPaused(true);
+    isPausedRef.current = true;
+    pauseSpeaking();
   };
 
   const handleExitConfirm = () => {
     setShowExitWarning(false);
+    isPausedRef.current = false;
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
@@ -169,12 +177,17 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    resumeSpeaking();
   };
 
   const typewriterEffect = (text: string, botIndex: number, onComplete: () => void) => {
     const words = text.split(" ");
-    let wordCount = 0;
-    setCurrentTypingText("");
+    let wordCount = pausedWordCountRef.current || 0;
+    pausedWordCountRef.current = 0;
+    if (wordCount === 0){
+      setCurrentTypingText("");}
     
     // Bot-Farbe ermitteln und Speech Synthesis mit spezifischer Stimme starten
     const botColor = allBots[botIndex].color as BotColor;
@@ -183,6 +196,10 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
     // Berechne Wort-Dauer basierend auf Sprechgeschwindigkeit
     
     typingIntervalRef.current = window.setInterval(() => {
+      if (isPausedRef.current) {
+        pausedWordCountRef.current = wordCount;
+        return;
+      }
       wordCount++;
       if (wordCount <= words.length) {
         setCurrentTypingText(words.slice(0, wordCount).join(" "));
@@ -369,6 +386,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
               isTyping={hasStarted && isTyping && activeBot === i}
               bubbleLabel={getBubbleLabel(i)}
               isSpeaking={hasStarted && !allBotsFinished && activeBot === i && (isTyping || currentTypingText !== undefined)}
+              isPaused={showExitWarning}
             />
           ))}
         </div>
