@@ -2,14 +2,13 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import CandidateCard from "../components/CandidateCard";
 import MuteButton from "../components/MuteButton";
 import ExitWarningModal from "../components/ExitWarningModal";
-import useSpeechSynthesis from "../hooks/useSpeechSynthesis";
-import type { BotColor } from "../hooks/useSpeechSynthesis";
 import type { ChatMessage } from "../types/types";
+import useAudioPlayback from "../hooks/useAudioPlayback";
 import "../App.css";
 import LanguageToggle from "../components/LanguageToggle";
 import { useLanguage } from "../hooks/useLanguage";
-import mockDebateDE from '../components/mockDebate.de.json';
-import mockDebateEN from '../components/mockDebate.en.json';
+import mockDebateDE from '../../debate_text/mockDebate.de.json';
+import mockDebateEN from '../../debate_text/mockDebate.en.json';
 
 
 // "Be an Active Part" - Role
@@ -49,8 +48,18 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
     color: Color;
     label: string;
     description: string;
+    id: number;
+    speaker: string;
   };
   type SpeakerKey = "A" | "B" | "C" | "D" | "E" | "SYSTEM";
+
+  const TYPEWRITER_SPEED: Record<string, number> = {
+    A: 400,
+    B: 380,
+    C: 380,
+    D: 380,
+    E: 380,
+  };
 
   type DebateScriptItem = {
     id: number;
@@ -76,8 +85,8 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
     }
   }, [introTime, hasStarted, showTimeExpired]);
   
-  // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
+  // Audio Playback
+  const { isMuted, toggleMute, play, stopPlaying, pausePlaying, resumePlaying } = useAudioPlayback();
   
   // Chatbot speaking logic
   const [activeBot, setActiveBot] = useState(0);
@@ -117,6 +126,8 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
         color,
         label: msg.text,
         description: roles?.[msg.speaker]?.description ?? "",
+        id: msg.id,
+        speaker: msg.speaker,
       };
     }).filter((bot) => bot.color !== "blue").sort((a, b) => order.indexOf(a.color) - order.indexOf(b.color));
   }, [debateScript, roles]);
@@ -136,9 +147,9 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       if (typingIntervalRef.current) {
         clearInterval(typingIntervalRef.current);
       }
-      stopSpeaking();
+      stopPlaying();
     };
-  }, [stopSpeaking]);
+  }, [stopPlaying]);
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)
   const handleSkip = () => {
@@ -146,7 +157,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    stopSpeaking();
+    stopPlaying();
     
     // Zeige den vollständigen Text des aktuellen Bots an
     const currentBotText = allBots[activeBot].label;
@@ -159,9 +170,9 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
   // Exit handlers
   const handleExitClick = () => {
     setShowExitWarning(true);
-    setIsPaused(true);
+    setIsPaused?.(true);
     isPausedRef.current = true;
-    pauseSpeaking();
+    pausePlaying();
   };
 
   const handleExitConfirm = () => {
@@ -171,15 +182,15 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    stopSpeaking();
+    stopPlaying();
     onExit();
   };
 
   const handleExitCancel = () => {
     setShowExitWarning(false);
-    setIsPaused(false);
+    setIsPaused?.(false);
     isPausedRef.current = false;
-    resumeSpeaking();
+    resumePlaying();
   };
 
   const typewriterEffect = (text: string, botIndex: number, onComplete: () => void) => {
@@ -190,8 +201,12 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
       setCurrentTypingText("");}
     
     // Bot-Farbe ermitteln und Speech Synthesis mit spezifischer Stimme starten
-    const botColor = allBots[botIndex].color as BotColor;
-    speak(text, { botColor, lang: language });
+    const bot = allBots[botIndex];
+    play({ 
+      section: 'arguments_intro',
+      speaker: bot.speaker, 
+      id: bot.id,
+      lang: language });
     
     // Berechne Wort-Dauer basierend auf Sprechgeschwindigkeit
     
@@ -213,7 +228,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
         setSpokenBots(prev => [...prev, botIndex]);
         onComplete();
       }
-    }, 380);
+    }, TYPEWRITER_SPEED[bot.speaker] ?? 380);
   };
 
   const handleNextSpeaker = () => {

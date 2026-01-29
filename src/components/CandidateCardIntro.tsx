@@ -1,9 +1,9 @@
 import React from "react";
-import yellowStandard from "./yellow_standard.jpg";
-import redStandard from "./red_standard.jpg";
-import greenStandard from "./green_standard.jpg";
-import greyStandard from "./grey_standard.jpg";
-import blueStandard from "./blue_standard.jpg";
+import yellowStandard from "../avatars/yellow_standard.jpg";
+import redStandard from "../avatars/red_standard.jpg";
+import greenStandard from "../avatars/green_standard.jpg";
+import greyStandard from "../avatars/grey_standard.jpg";
+import blueStandard from "../avatars/blue_standard.jpg";
 
 interface CandidateCardIntroProps {
   color: "yellow" | "gray" | "red" | "green" | "blue";

@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import yellowVideo from "./yellow.mp4";
-import redVideo from "./red.mp4";
-import greenVideo from "./green.mp4";
-import greyVideo from "./grey.mp4";
-import blueVideo from "./blue.mp4";
-import yellowStandard from "./yellow_standard.jpg";
-import redStandard from "./red_standard.jpg";
-import greenStandard from "./green_standard.jpg";
-import greyStandard from "./grey_standard.jpg";
-import blueStandard from "./blue_standard.jpg";
+import yellowVideo from "../avatars/yellow.mp4";
+import redVideo from "../avatars/red.mp4";
+import greenVideo from "../avatars/green.mp4";
+import greyVideo from "../avatars/grey.mp4";
+import blueVideo from "../avatars/blue.mp4";
+import yellowStandard from "../avatars/yellow_standard.jpg";
+import redStandard from "../avatars/red_standard.jpg";
+import greenStandard from "../avatars/green_standard.jpg";
+import greyStandard from "../avatars/grey_standard.jpg";
+import blueStandard from "../avatars/blue_standard.jpg";
 
 interface CandidateCardProps {
   color: "yellow" | "gray" | "green" | "red" | "blue";

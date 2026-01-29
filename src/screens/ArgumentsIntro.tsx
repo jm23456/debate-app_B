@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import CandidateCard from "../components/CandidateCard";
 import MuteButton from "../components/MuteButton";
 import ExitWarningModal from "../components/ExitWarningModal";
-import useSpeechSynthesis from "../hooks/useSpeechSynthesis";
-import type { BotColor } from "../hooks/useSpeechSynthesis";
+import useAudioPlayback from "../hooks/useAudioPlayback";
 import "../App.css";
 import LanguageToggle from "../components/LanguageToggle";
 import { useLanguage } from '../hooks/useLanguage';    
-import mockDebateDE from '../components/mockDebate.de.json';
-import mockDebateEN from '../components/mockDebate.en.json';
+import mockDebateDE from '../../debate_text/mockDebate.de.json';
+import mockDebateEN from '../../debate_text/mockDebate.en.json';
 
 
 interface ArgumentsIntroProps {
@@ -49,6 +48,8 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
     color: Color;
     label: string;
     description: string;
+    id: number;
+    speaker: string;
   };
 
   type Speaker = "A" | "B" | "C" | "D" | "E" | "SYSTEM";
@@ -76,8 +77,8 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
     }
   }, [introTime, hasStarted, showTimeExpired]);
 
-  // Speech Synthesis
-  const { isMuted, toggleMute, speak, stopSpeaking, getWordDuration, pauseSpeaking, resumeSpeaking } = useSpeechSynthesis();
+  // Audio Playback
+  const { isMuted, toggleMute, play, stopPlaying, pausePlaying, resumePlaying } = useAudioPlayback();
 
   // Skip function - überspringt nur den aktuellen Bot (stoppt Sprechen, zeigt vollen Text)
   const handleSkip = () => {
@@ -85,7 +86,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    stopSpeaking();
+    stopPlaying();
     
     // Zeige den vollständigen Text des aktuellen Bots an
     const currentBotText = allBots[activeBot].label;
@@ -100,7 +101,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
     setShowExitWarning(true);
     setIsPaused(true);
     isPausedRef.current = true;
-    pauseSpeaking();
+    pausePlaying();
   };
 
   const handleExitConfirm = () => {
@@ -110,7 +111,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    stopSpeaking();
+    stopPlaying();
     onExit();
   };
 
@@ -118,7 +119,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
     setShowExitWarning(false);
     setIsPaused(false);
     isPausedRef.current = false;
-    resumeSpeaking();
+    resumePlaying();
   };
 
   // Pro: B (yellow) = Solidarität & soziale Perspektive, D (gray) = Ökonomische Systemperspektive
@@ -147,6 +148,8 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
         color,
         label: msg.text,
         description: (roles as Record <Speaker, RoleData> | undefined)?.[msg.speaker]?.description ?? "",
+        id: msg.id,
+        speaker: msg.speaker,
       };
     }).sort((a, b) => order.indexOf(a.color) - order.indexOf(b.color));
   }, [debateScript, roles]);
@@ -160,9 +163,14 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
       setCurrentTypingText("");
     }
     
-    // Bot-Farbe ermitteln und Speech Synthesis mit spezifischer Stimme starten
-    const botColor = allBots[botIndex].color as BotColor;
-    speak(text, { botColor, lang: language });
+    // Bot-Farbe ermitteln und Audio Playback starten
+    const bot = allBots[botIndex];
+    play({ 
+      section: 'arguments_intro',
+      speaker: bot.speaker, 
+      id: bot.id,
+      lang: language 
+    });
     
     typingIntervalRef.current = window.setInterval(() => {
       if (isPausedRef.current) {
@@ -191,9 +199,9 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
       if (typingIntervalRef.current) {
         clearInterval(typingIntervalRef.current);
       }
-      stopSpeaking();
+      stopPlaying();
     };
-  }, [stopSpeaking]);
+  }, [stopPlaying]);
 
   const handleNext = () => {
     if (!hasStarted) {

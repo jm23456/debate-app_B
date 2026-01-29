@@ -12,6 +12,8 @@
     "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
+    "openai": "^6.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -10,7 +10,6 @@ import ArgumentsIntro from "./screens/ArgumentsIntro";
 import ActiveDebateScreen from "./screens/ActiveDebateScreen";
 import ActiveArgumentsIntro from "./screens/ActiveArgumentsIntro";
 import DebateScreen from "./screens/DebateScreen";
-import WatchDebateScreen from "./screens/WatchDebateScreen";
 import Summary from "./screens/Summary";
 import { LanguageProvider } from "./i18n/LanguageContext";
 
@@ -232,29 +231,6 @@ const App: React.FC = () => {
               setActiveBot(0);
             }}
             userIntroMessage={userIntroMessage}
-            isPaused={isPaused}
-            setIsPaused={setIsPaused}
-          />
-        )}
-
-        {step === STEPS.DEBATE && role === "WATCH" && (
-          <WatchDebateScreen
-            topicTitle={currentTopicTitle}
-            role={role}
-            timeLeft={formatTime(timeLeft)}
-            onExit={() => {
-              setStep(STEPS.SUMMARY);
-              setIntroTime(1 * 60);
-              setTimeLeft(15 * 60);
-              setCustomTopic("");
-              setSelectedTopic("");
-              setIsPaused(false);
-            }}
-            hasStarted={hasStarted}
-            onStart={() => {
-              setHasStarted(true);
-              setTimeLeft(15 * 60);
-              setActiveBot(0);}}
             isPaused={isPaused}
             setIsPaused={setIsPaused}
           />
