@@ -14,6 +14,16 @@ const SPEAKER_PLAYBACK_RATES: Record<string, number> = {
   E: 1.05,      // ash (blau) - schneller (+0.1)
 };
 
+// Lautstärke pro Speaker (0.0 bis 1.0)
+// A (coral) und D (sage) sind weibliche Stimmen und werden lauter gemacht
+const SPEAKER_VOLUMES: Record<string, number> = {
+  A: 1.0,       // coral (rot) ♀ - lauter
+  B: 0.6,       // onyx (gelb) ♂ - normal
+  C: 0.6,       // alloy (grün) - normal
+  D: 1.0,       // sage (grau) ♀ - lauter
+  E: 0.6,       // ash (blau) ♂ - normal
+};
+
 export interface PlayOptions {
   section: AudioSection;
   speaker: string; // "A", "B", "C", "D", "E"
@@ -106,6 +116,9 @@ export const useAudioPlayback = (): UseAudioPlaybackReturn => {
 
     // Setze die Wiedergabegeschwindigkeit basierend auf dem Speaker
     audio.playbackRate = SPEAKER_PLAYBACK_RATES[options.speaker] ?? 1.0;
+    
+    // Setze die Lautstärke basierend auf dem Speaker
+    audio.volume = SPEAKER_VOLUMES[options.speaker] ?? 0.7;
 
     audio.onplay = () => setIsPlaying(true);
     audio.onended = () => {
