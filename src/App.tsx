@@ -251,6 +251,7 @@ const App: React.FC = () => {
               setTimeLeft(15 * 60);
               setCustomTopic("");
               setSelectedTopic("");
+              setIsPaused(false);
             }}
             hasStarted={hasStarted}
             onStart={() => {
@@ -259,6 +260,7 @@ const App: React.FC = () => {
               setActiveBot(0);
               setIsPaused(false);
             }}
+            setIsPaused={setIsPaused}
           />
         )}
 

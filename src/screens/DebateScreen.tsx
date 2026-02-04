@@ -95,7 +95,15 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   const handleExitConfirm = () => {
     setShowExitWarning(false);
     isPausedRef.current = false;
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
     stopPlaying();
+    setIsSpeaking(false);
+    setIsTyping(false);
+    setCurrentTypingText(undefined);
+    currentBubbleRef.current = null;
     onExit();
   };
 
