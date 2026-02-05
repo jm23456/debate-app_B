@@ -64,7 +64,7 @@ de: {
     goToSummary: "Zur Zusammenfassung",
     summaryIntroRound: "Runde 3 von 3 ●●●",
     summaryIntroTitle: "Debatte beendet.",
-    summaryIntroText: "Hier können Sie die wichtigsten Stichpunkte der Debatte nochmals durchlesen.",
+    summaryIntroText: "Hier kannst du die wichtigsten Stichpunkte der Debatte nochmals durchlesen.",
     skipSpeaker: "Nachricht direkt anzeigen"
 },
 en: {
