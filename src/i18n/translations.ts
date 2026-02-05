@@ -61,7 +61,11 @@ de: {
     timeExpiredFinish: "Die Zeit der Debatte ist vorbei. Bitte beende die Debatte.",
     debateFinishedTitle: "Debatte beendet",
     debateFinishedText: "Gehe nun weiter zur Zusammenfassung",
-    goToSummary: "Zur Zusammenfassung"
+    goToSummary: "Zur Zusammenfassung",
+    summaryIntroRound: "Runde 3 von 3 ●●●",
+    summaryIntroTitle: "Debatte beendet.",
+    summaryIntroText: "Hier können Sie die wichtigsten Stichpunkte der Debatte nochmals durchlesen.",
+    skipSpeaker: "Nachricht direkt anzeigen"
 },
 en: {
     continue: "Continue",
@@ -124,7 +128,11 @@ en: {
     timeExpiredFinish: "The debate time is up. Please finish the debate.",
     debateFinishedTitle: "End of the Debate!",
     debateFinishedText: "Go to the summary now to see the key points.",
-    goToSummary: "Go to Summary"
+    goToSummary: "Go to Summary",
+    summaryIntroRound: "Round 3 of 3 ●●●",
+    summaryIntroTitle: "Debate ended.",
+    summaryIntroText: "Here you can review the key points of the debate.",
+    skipSpeaker: "Show message directly"
 },
 } as const;
 

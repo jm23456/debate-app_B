@@ -378,7 +378,7 @@ const ArgumentsIntro: React.FC<ArgumentsIntroProps> = ({
             <button 
               className="skip-icon-btn" 
               onClick={handleSkip}
-              title="Skip current speaker"
+              title={t("skipSpeaker")}
             >
               ⏭
             </button>

@@ -53,6 +53,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
   const [showDebateFinished, setShowDebateFinished] = useState(false);
   const [showUrgentPrompt, setShowUrgentPrompt] = useState(false);
   const [isInitialPrompt, setIsInitialPrompt] = useState(true);
+  const messagesSinceUserInput = useRef(0);
 
   type SpeakerKey = "A" | "B" | "C" | "D" | "E" | "SYSTEM";
 
@@ -137,6 +138,12 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
       }]);
       setVisibleBubbles(prev => prev + 1);
       currentBubbleRef.current = null;
+      
+      // Zähle auch für den urgent prompt
+      messagesSinceUserInput.current += 1;
+      if (messagesSinceUserInput.current >= 4) {
+        setShowUrgentPrompt(true);
+      }
     }
   };
 
@@ -283,6 +290,12 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
           isComplete: true
         }]);
         setVisibleBubbles(prev => prev + 1);
+        
+        // Zähle Nachrichten seit letztem User-Input für urgent prompt
+        messagesSinceUserInput.current += 1;
+        if (messagesSinceUserInput.current >= 4) {
+          setShowUrgentPrompt(true);
+        }
       }
     }, 380);
   };
@@ -335,6 +348,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
       const wasInitialPrompt = isInitialPrompt;
       setShowUrgentPrompt(false);
       setIsInitialPrompt(false);
+      messagesSinceUserInput.current = 0;
       
       // Wenn es der initiale Prompt war, starte den ersten Chatbot
       if (wasInitialPrompt && visibleBubbles === 0) {
@@ -397,6 +411,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
     // Reset urgent prompt nach User-Input
     setShowUrgentPrompt(false);
     setIsInitialPrompt(false);
+    messagesSinceUserInput.current = 0;
     
     onSend();
     
@@ -666,7 +681,7 @@ const DebateScreen: React.FC<DebateScreenProps> = ({
               <button 
                 className="skip-icon-btn" 
                 onClick={handleSkip}
-                title="Skip current speaker"
+                title={t("skipSpeaker")}
               >
                 ⏭
               </button> 

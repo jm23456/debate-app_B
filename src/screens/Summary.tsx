@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CandidateCardIntro from '../components/CandidateCardIntro';
 import "../App.css";
 import LanguageToggle from '../components/LanguageToggle';
@@ -11,6 +11,7 @@ interface SummaryProps {
 
 const Summary: React.FC<SummaryProps> = ({onStartAnother }) => {
   const { t } = useLanguage();
+  const [showSummaryIntro, setShowSummaryIntro] = useState(true);
 
   return (
     <div className="screen" style={{
@@ -69,6 +70,29 @@ const Summary: React.FC<SummaryProps> = ({onStartAnother }) => {
         </button>
       </footer>
     </div>
+
+    {/* Summary Intro Modal */}
+    {showSummaryIntro && (
+      <div className="start-debate-modal-overlay">
+        <div className="start-debate-modal" style={{padding: 0, overflow: "hidden"}}>
+          <div style={{
+            background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)",
+            padding: "1.25rem 1.5rem",
+            borderRadius: "1.5rem 1.5rem 0 0",
+            marginBottom: "0.5rem"
+          }}>
+            <p style={{fontSize: "20px", fontWeight: "600", margin: 0, color: "#5b21b6"}}>{t("summaryIntroRound")}</p>
+          </div>
+          <div style={{padding: "0rem 0.5rem 1.5rem 0.5rem"}}>
+            <h2 className="modal-title" style={{fontSize: "22px", marginTop: "5px"}}>{t("summaryIntroTitle")}</h2>
+            <p className="modal-text" style={{fontSize: "16px", marginTop: "0px"}}>{t("summaryIntroText")}</p>
+            <button className="start-debate-btn" onClick={() => setShowSummaryIntro(false)}>
+              {t("continue")}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

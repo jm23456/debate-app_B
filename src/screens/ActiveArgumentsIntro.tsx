@@ -449,7 +449,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
               <button 
                 className="skip-icon-btn" 
                 onClick={handleSkip}
-                title="Skip current speaker"
+                title={t("skipSpeaker")}
               >
                 ⏭
               </button>
@@ -497,7 +497,7 @@ const ActiveArgumentsIntro: React.FC<ActiveArgumentsScreenProps> = ({
             <button 
               className="skip-icon-btn" 
               onClick={handleSkip}
-              title="Skip current speaker"
+              title={t("skipSpeaker")}
             >
               ⏭
             </button>

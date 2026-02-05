@@ -143,7 +143,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
           setVisibleBubbles(prev => prev + 1);
           
           messagesSinceUserInput.current += 1;
-          if (messagesSinceUserInput.current >= 4 && !showUrgentPrompt) {
+          if (messagesSinceUserInput.current >= 4) {
             setShowUrgentPrompt(true);
           }
         }
@@ -177,7 +177,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
       
       // Zähle auch für den urgent prompt
       messagesSinceUserInput.current += 1;
-      if (messagesSinceUserInput.current >= 4 && !showUrgentPrompt) {
+      if (messagesSinceUserInput.current >= 4) {
         setShowUrgentPrompt(true);
       }
     }
@@ -340,7 +340,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
         
         // Zähle Bot-Nachrichten und zeige nach 4 die dringende Aufforderung
         messagesSinceUserInput.current += 1;
-        if (messagesSinceUserInput.current >= 4 && !showUrgentPrompt) {
+        if (messagesSinceUserInput.current >= 4) {
           setShowUrgentPrompt(true);
         }
       }
@@ -702,7 +702,7 @@ const ActiveDebateScreen: React.FC<ActiveDebateScreenProps> = ({
               <button 
                 className="skip-icon-btn" 
                 onClick={handleSkip}
-                title="Skip current speaker"
+                title={t("skipSpeaker")}
               >
                 ⏭
               </button>
